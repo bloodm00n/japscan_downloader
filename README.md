@@ -1,0 +1,1 @@
+# japscan_downloader
