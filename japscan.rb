@@ -63,10 +63,11 @@ class Manga
     end
 
     chap_path = @folder + "/" + chap
-    if Dir.exists?(chap_path) == true
-      puts "Warning: Chapter #{chapter} already exist in " + @folder + " -> skipping"
-      return
-    elsif File.exists?("#{chap_path}.cbz") == true
+    #if Dir.exists?(chap_path) == true
+    #  puts "Warning: Chapter #{chapter} already exist in " + @folder + " -> skipping"
+    #  return
+    #els
+    if File.exists?("#{chap_path}.cbz") == true
       puts "Warning: Archive #{chap_path}.cbz already exist in " + @folder + " -> skipping"
       return
     end
@@ -90,11 +91,16 @@ class Manga
       stream = " -> downloading file "+ i.to_s + "/" + img_src.length.to_s
       print stream
       open(filename.chomp, 'w') do |file|
-        file.write(open(url).read)
-        file.close
+        if check_url(url) == true
+          file.write(open(url).read)
+          file.close
+        else
+          puts "\nWarning : did not found url " + url
+        end
       end
     end
     puts "   => complete"
+    puts "Producing file #{chap_path}.cbz" 
     `zip -rj "#{chap_path}.cbz" "#{chap_path}"`
     FileUtils.rm_r chap_path
 
@@ -154,6 +160,10 @@ def search_menu
 
 end
 
+def check_url(url)
+  return (Net::HTTP.get_response(URI.parse(url)).code == '200')
+end
+
 def download_menu
 
   res = 0
@@ -161,14 +171,7 @@ def download_menu
     puts "Enter full manga name" 
     manga_name = gets.chomp
     url = "http://www.japscan.com/mangas/" + manga_name + "/"
-    
-    # check url exists
-    urlv = URI.parse(url)
-    Net::HTTP.start(urlv.host, urlv.port) do |http|
-      res = http.head(urlv.request_uri).code
-      puts res
-    end
-  end while res != '200'
+  end while check_url(url) == false
 
   mymanga = Manga.new(url)
   mymanga.get_chap
